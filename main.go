@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 )
 
 var maze []string
@@ -31,6 +32,40 @@ func printScreen() {
 	}
 }
 
+func readInput() (string, error) {
+	buffer := make([]byte, 100)
+	cnt, err := os.Stdin.Read(buffer)
+
+	if err != nil {
+		return "", err
+	}
+
+	if cnt == 1 && buffer[0] == 0x1b {
+		return "ESC", nil
+	}
+	return "", nil
+}
+
+func initialize() {
+	cbTerm := exec.Command("stty", "cbreak", "-echo")
+	cbTerm.Stdin = os.Stdin
+
+	err := cbTerm.Run()
+	if err != nil {
+		log.Fatal("Unable to activate cbreak mode: ", err)
+	}
+}
+
+func cleanup() {
+	cookedTerm := exec.Command("stty", "-cbreak", "echo")
+	cookedTerm.Stdin = os.Stdin
+
+	err := cookedTerm.Run()
+	if err != nil {
+		log.Fatal("Unable to activate cooked mode: ", err)
+	}
+}
+
 func main() {
 	//	initialize the game
 	err := loadMaze("maze.txt")
@@ -44,11 +79,16 @@ func main() {
 		//	update screen
 		printScreen()
 		// process input
-
+		input, err := readInput()
+		if err != nil {
+			log.Println("Error reading input!", err)
+		}
 		// process collisions
 
 		// check if game is over
-
+		if input == "ESC" {
+			break
+		}
 		// Temp: break infinite loop
 		break
 
